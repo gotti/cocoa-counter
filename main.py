@@ -69,7 +69,6 @@ while True:
         for (adTypeCode, description, valueText) in dev.getScanData():
             if adTypeCode == 3:
                 device.setuuid(valueText) #  == "0000fd6f-0000-1000-8000-00805f9b34fb"
-                nop += 1
                 if valueText == "0000fd6f-0000-1000-8000-00805f9b34fb":
                     #print("!----!")
                     print(time.time(),dev.rssi,dev.getScanData())
@@ -115,9 +114,7 @@ while True:
     for k in devicepoplist:
         devices.pop(k)
 
-    nop = 0
-    for k,v in joinedusers.items():
-        nop += 1
+    nop = len(joinedusers)
     #print("joined"+str(len(joinedusers)))
     #print("queued"+str(len(queuedusers)))
     if time.time()-lastupdated >= 300:
