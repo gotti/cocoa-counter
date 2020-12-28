@@ -2,6 +2,7 @@ from bluepy import btle
 import requests
 import time
 import datetime
+from dataclasses import dataclass
 
 #posturl = "XXXXXXXX"
 posturl = "XXXXXX"
@@ -16,10 +17,12 @@ oldnum = 0
 num = 0
 lastposted = 0
 lastupdated = 0
+
+@dataclass
 class User:
-    def __init__(self, rpid=0):
-        self.rpid = rpid
-        self.remainingtime = 20 # 60s = scantime(3s) * 20 times
+    rpid:int = 0
+    remainingtime:int = 20 # 60s = scantime(3s) * 20 times
+
     def inctime(self):
         self.remainingtime += 1
         #print("remainingtime  "+str(self.remainingtime))
@@ -37,11 +40,12 @@ class User:
     def getrpid(self):
         return self.rpid
 
+@dataclass
 class Device():
-    def __init__(self, uuid=0, rpid=0, rssi=0):
-        self.uuid = uuid
-        self.rpid = rpid
-        self.rssi = rssi
+    uuid:int = 0
+    rpid:int = 0
+    rssi:int = 0
+
     def setuuid(self, uuid=0):
         self.uuid = uuid
     def setrpid(self, rpid=0):
