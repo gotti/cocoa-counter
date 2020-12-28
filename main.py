@@ -84,24 +84,25 @@ while True:
         print(time.time(),devices[k].getrpid(),devices[k].getrssi())
         print("-----------------------------------------------------")
 
-    for k in (joinedusers.keys & devices.keys): #キーの積集合
+    for k in (joinedusers.keys() & devices.keys()): #キーの積集合
         devices.pop(k) # ここでpopしていいのか自信ない
         joinedusers[k].rsttime()
-    for k in (joinedusers.keys - devices.keys): #キーの差集合
+    for k in (joinedusers.keys() - devices.keys()): #キーの差集合
         v=joinedusers[k]
         v.dectime()
         if v.remainingtime == 0:
             joinedusers.pop(k)
 
-    for k in (queuedusers.keys & devices.keys): #キーの積集合
+    for k in (queuedusers.keys() & devices.keys()): #キーの積集合
         v=queuedusers[k]
         v.dectime()
         devices.pop(k)
         if v.remainingtime == 0:
             v.rsttime()
             joinedusers[k] = v
-            queueduserpoplist.append(k)
-    for k in (queuedusers.keys - devices.keys): #キーの差集合
+            queuedusers.pop(k)
+    for k in (queuedusers.keys() - devices.keys()): #キーの差集合
+        v=queuedusers[k]
         v.inctime()
         if v.remainingtime == 20*1+20:
             queuedusers.pop(k)
