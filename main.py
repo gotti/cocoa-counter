@@ -135,6 +135,6 @@ while True:
             lastposted = time.time()
             print(str(num))
             now = datetime.datetime.fromtimestamp(time.time())
-            payload = {"content":"["+now.strftime("%H:%M:%S")+"] "+"部室にいるCOCOA利用者:"+str(oldnum)+"→"+str(num)}
-            requests.post(posturl, json=payload,proxies=proxy_dict)
+            payload = {"content": f"[{now.strftime('%H:%M:%S')}] 部室にいるCOCOA利用者:{oldnum}→{num}"}
+            requests.post(posturl, json=payload, proxies=proxy_dict)
             oldnum = num
