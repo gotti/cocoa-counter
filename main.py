@@ -2,6 +2,7 @@ from bluepy import btle
 import requests
 import time
 import datetime
+from dataclasses import dataclass
 
 #posturl = "XXXXXXXX"
 posturl = "XXXXXX"
@@ -12,14 +13,16 @@ proxy_dict = {
 takoyakisan_apiurl = "YYYYYYYYYYYYYYYY"
 
 scanner = btle.Scanner(0)
-oldnum = 0
-num = 0
+nop = 0 #Number of People
+oldnop = 0 # old Number of People
 lastposted = 0
 lastupdated = 0
+
+@dataclass
 class User:
-    def __init__(self, rpid=0):
-        self.rpid = rpid
-        self.remainingtime = 20 # 60s = scantime(3s) * 20 times
+    rpid:int = 0
+    remainingtime:int = 20 # 60s = scantime(3s) * 20 times
+
     def inctime(self):
         self.remainingtime += 1
         #print("remainingtime  "+str(self.remainingtime))
@@ -37,11 +40,12 @@ class User:
     def getrpid(self):
         return self.rpid
 
+@dataclass
 class Device():
-    def __init__(self, uuid=0, rpid=0, rssi=0):
-        self.uuid = uuid
-        self.rpid = rpid
-        self.rssi = rssi
+    uuid:int = 0
+    rpid:int = 0
+    rssi:int = 0
+
     def setuuid(self, uuid=0):
         self.uuid = uuid
     def setrpid(self, rpid=0):
@@ -65,7 +69,6 @@ while True:
         for (adTypeCode, description, valueText) in dev.getScanData():
             if adTypeCode == 3:
                 device.setuuid(valueText) #  == "0000fd6f-0000-1000-8000-00805f9b34fb"
-                num += 1
                 if valueText == "0000fd6f-0000-1000-8000-00805f9b34fb":
                     #print("!----!")
                     print(time.time(),dev.rssi,dev.getScanData())
@@ -80,61 +83,50 @@ while True:
     for k in sorted(devices.keys()):
         print(time.time(),devices[k].getrpid(),devices[k].getrssi())
         print("-----------------------------------------------------")
-    joineduserpoplist = []
-    for k,v in joinedusers.items():
-        if k in devices.keys():
-            v.rsttime()
-            devices.pop(k)
-        else:
-            v.dectime()
-            if v.remainingtime == 0:
-                joineduserpoplist.append(k)
-    #delete user
-    for k in joineduserpoplist:
-        joinedusers.pop(k)
 
-    queueduserpoplist = []
-    for k,v in queuedusers.items():
-        if k in devices.keys():
-            v.dectime()
-            devices.pop(k)
-            if v.remainingtime == 0:
-                v.rsttime()
-                joinedusers[k] = v
-                queueduserpoplist.append(k)
-        else:
-            v.inctime()
-            if v.remainingtime == 20*1+20:
-                queueduserpoplist.append(k)
-    for k in queueduserpoplist:
-        queuedusers.pop(k)
+    for k in (joinedusers.keys() & devices.keys()): #キーの積集合
+        devices.pop(k) # ここでpopしていいのか自信ない
+        joinedusers[k].rsttime()
+    for k in (joinedusers.keys() - devices.keys()): #キーの差集合
+        v=joinedusers[k]
+        v.dectime()
+        if v.remainingtime == 0:
+            joinedusers.pop(k)
+
+    for k in (queuedusers.keys() & devices.keys()): #キーの積集合
+        v=queuedusers[k]
+        v.dectime()
+        devices.pop(k)
+        if v.remainingtime == 0:
+            v.rsttime()
+            joinedusers[k] = v
+            queuedusers.pop(k)
+    for k in (queuedusers.keys() - devices.keys()): #キーの差集合
+        v=queuedusers[k]
+        v.inctime()
+        if v.remainingtime == 20*1+20:
+            queuedusers.pop(k)
 
     #add new data
-    devicepoplist = []
     for k,v in devices.items():
         queuedusers[k] = User(v.getrpid())
-        devicepoplist.append(k)
-    for k in devicepoplist:
-        devices.pop(k)
 
-    num = 0
-    for k,v in joinedusers.items():
-        num += 1
+    nop = len(joinedusers)
     #print("joined"+str(len(joinedusers)))
     #print("queued"+str(len(queuedusers)))
     if time.time()-lastupdated >= 300:
         lastupdated = time.time()
-        r = requests.get(takoyakisan_apiurl+str(num),proxies=proxy_dict)
+        r = requests.get(takoyakisan_apiurl+str(nop),proxies=proxy_dict)
         if r.json()["status"]!="ok":
             payload1 = {"context:" "APIサーバへのアクセスに失敗"}
             requests.post(posturl, json=payload1,proxies=proxy_dict)
         print("updated")
 
     if time.time()-lastposted >= 300:
-        if len(queuedusers) == 0 and num != oldnum:
+        if len(queuedusers) == 0 and nop != oldnop:
             lastposted = time.time()
-            print(str(num))
+            print(str(nop))
             now = datetime.datetime.fromtimestamp(time.time())
-            payload = {"content": f"[{now.strftime('%H:%M:%S')}] 部室にいるCOCOA利用者:{oldnum}→{num}"}
+            payload = {"content": f"[{now.strftime('%H:%M:%S')}] 部室にいるCOCOA利用者:{oldnop}→{nop}"}
             requests.post(posturl, json=payload, proxies=proxy_dict)
-            oldnum = num
+            oldnop = nop
