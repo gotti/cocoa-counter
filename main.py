@@ -107,12 +107,8 @@ while True:
             queuedusers.pop(k)
 
     #add new data
-    devicepoplist = []
     for k,v in devices.items():
         queuedusers[k] = User(v.getrpid())
-        devicepoplist.append(k)
-    for k in devicepoplist:
-        devices.pop(k)
 
     nop = len(joinedusers)
     #print("joined"+str(len(joinedusers)))
