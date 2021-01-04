@@ -85,31 +85,31 @@ while True:
         print("-----------------------------------------------------")
 
     for k in (joinedusers.keys() & devices.keys()): #キーの積集合
-        devices.pop(k) # ここでpopしていいのか自信ない
         joinedusers[k].rsttime()
+
     for k in (joinedusers.keys() - devices.keys()): #キーの差集合
         v=joinedusers[k]
-        v.dectime()
-        if v.remainingtime == 0:
+        v.inctime()
+        if v.remainingtime == 20*1+20:
             joinedusers.pop(k)
 
     for k in (queuedusers.keys() & devices.keys()): #キーの積集合
         v=queuedusers[k]
         v.dectime()
-        devices.pop(k)
         if v.remainingtime == 0:
             v.rsttime()
             joinedusers[k] = v
             queuedusers.pop(k)
+
     for k in (queuedusers.keys() - devices.keys()): #キーの差集合
         v=queuedusers[k]
         v.inctime()
         if v.remainingtime == 20*1+20:
             queuedusers.pop(k)
 
-    #add new data
-    for k,v in devices.items():
-        queuedusers[k] = User(v.getrpid())
+    #add new user
+    for k in (devices.keys() - queuedusers.keys() - joinedusers.keys()):
+        queuedusers[k] = User(devices[k].getrpid())
 
     nop = len(joinedusers)
     #print("joined"+str(len(joinedusers)))
