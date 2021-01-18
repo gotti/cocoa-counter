@@ -16,7 +16,7 @@ gotti_apiurl = "ZZZZZZZZZZZ"
 scanner = btle.Scanner(0)
 avgnop = 0
 oldAvgnop = 0
-listOfnop = [0] * 10*3*20 #number of people (last 10 * 3 * 20 times, approximately 10min)
+listofnop = [0] * 10*3*20 #number of people (last 10 * 3 * 20 times, approximately 10min)
 lastposted = 0
 lastupdated = 0
 
@@ -114,12 +114,12 @@ while True:
         queuedusers[k] = User(devices[k].getrpid())
 
     #rotate and replace oldest nop
-    listOfnop = listOfnop[1:] + [len(joinedusers)]
+    listofnop = listofnop[1:] + [len(joinedusers)]
     l = 0
-    for i in listOfnop:
+    for i in listofnop:
         l += i
-    print(len(listOfnop))
-    avgnop = round(round(l/len(listOfnop)))
+    print(len(listofnop))
+    avgnop = round(round(l/len(listofnop)))
 
     #nop = len(joinedusers)
     if time.time()-lastupdated >= 300:
