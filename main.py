@@ -11,10 +11,12 @@ proxy_dict = {
     "https": "http://proxy.uec.ac.jp:8080/"
 }
 takoyakisan_apiurl = "YYYYYYYYYYYYYYYY"
+gotti_apiurl = "ZZZZZZZZZZZ"
 
 scanner = btle.Scanner(0)
-nop = 0 #Number of People
-oldnop = 0 # old Number of People
+avgnop = 0
+oldAvgnop = 0
+listOfnop = [0] * 10*3*20 #number of people (last 10 * 3 * 20 times, approximately 10min)
 lastposted = 0
 lastupdated = 0
 
@@ -107,26 +109,32 @@ while True:
         if v.remainingtime == 20*1+20:
             queuedusers.pop(k)
 
-    #add new user
+    #add new data
     for k in (devices.keys() - queuedusers.keys() - joinedusers.keys()):
         queuedusers[k] = User(devices[k].getrpid())
 
-    nop = len(joinedusers)
-    #print("joined"+str(len(joinedusers)))
-    #print("queued"+str(len(queuedusers)))
+    #rotate and replace oldest nop
+    listOfnop = listOfnop[1:] + [len(joinedusers)]
+    l = 0
+    for i in listOfnop:
+        l += i
+    print(len(listOfnop))
+    avgnop = round(round(l/len(listOfnop)))
+
+    #nop = len(joinedusers)
     if time.time()-lastupdated >= 300:
         lastupdated = time.time()
-        r = requests.get(takoyakisan_apiurl+str(nop),proxies=proxy_dict)
+        r = requests.get(takoyakisan_apiurl+str(avgnop),proxies=proxy_dict)
+        ie = requests.get(gotti_apiurl, proxies=proxy_dict)
         if r.json()["status"]!="ok":
-            payload1 = {"context:" "APIサーバへのアクセスに失敗"}
+            payload1 = {"content:" "APIサーバへのアクセスに失敗"}
             requests.post(posturl, json=payload1,proxies=proxy_dict)
         print("updated")
 
     if time.time()-lastposted >= 300:
-        if len(queuedusers) == 0 and nop != oldnop:
+        if len(queuedusers) == 0 and avgnop != oldAvgnop:
             lastposted = time.time()
-            print(str(nop))
             now = datetime.datetime.fromtimestamp(time.time())
-            payload = {"content": f"[{now.strftime('%H:%M:%S')}] 部室にいるCOCOA利用者:{oldnop}→{nop}"}
+            payload = {"content": f"[{now.strftime('%H:%M:%S')}] 部室にいるCOCOA利用者:{oldAvgnop}→{avgnop}"}
             requests.post(posturl, json=payload, proxies=proxy_dict)
-            oldnop = nop
+            oldAvgnop = avgnop
